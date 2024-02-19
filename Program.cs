@@ -24,7 +24,7 @@ foreach (var (projectSearchPattern, versionRegex) in searchConfigs)
             var version = match.Groups[1].Value;
             if (!versionProjects.ContainsKey(version))
             {
-                versionProjects[version] = new List<string>();
+                versionProjects[version] = [];
             }
 
             versionProjects[version].Add(projectFile);
@@ -32,13 +32,21 @@ foreach (var (projectSearchPattern, versionRegex) in searchConfigs)
     }
 }
 
+var fileName = $"DotNetProjectVersions-{DateTime.Now:yyyyMMdd}.txt";
+var userPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+var filePath = Path.Combine(userPath, "Downloads", fileName);
+using var writer = new StreamWriter(filePath);
+
 foreach (var (version, projects) in versionProjects)
 {
     Console.WriteLine($"{version}");
+    writer.WriteLine($"{version}");
     foreach (var project in projects)
     {
         Console.WriteLine($"\t{project}");
+        writer.WriteLine($"\t{project}");
     }
 }
 
+Console.WriteLine($"Results written to: {filePath}");
 Console.WriteLine($"Elapsed: {sw.ElapsedMilliseconds} ms");
