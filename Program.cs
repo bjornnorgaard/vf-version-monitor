@@ -5,18 +5,31 @@ var sw = Stopwatch.StartNew();
 var repositoryDirectory = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", ".."));
 Console.WriteLine("Searching directory: " + repositoryDirectory);
 
-var searchConfigs = new Dictionary<string, string>
+const string csproj = "*.csproj";
+
+var searchConfigs = new List<string>
 {
-    { "*.csproj", "<TargetFramework>(.*?)</TargetFramework>" }
+    "<TargetFramework>(.*?)</TargetFramework>",
+    "<TargetFrameworkVersion>(.*?)</TargetFrameworkVersion>",
+};
+
+var ignoredPaths = new List<string>
+{
+    "WM2", "WM-2", "WindmanagerFrontend", "Blazor", "Razor"
 };
 
 var versionProjects = new Dictionary<string, List<string>>();
-foreach (var (projectSearchPattern, versionRegex) in searchConfigs)
+foreach (var versionRegex in searchConfigs)
 {
-    var projectFiles = Directory.GetFiles(repositoryDirectory, projectSearchPattern, SearchOption.AllDirectories);
+    var projectFiles = Directory.GetFiles(repositoryDirectory, csproj, SearchOption.AllDirectories);
 
     foreach (var projectFile in projectFiles)
     {
+        if (ignoredPaths.Any(s => projectFile.Contains(s)))
+        {
+            continue;
+        }
+
         var content = File.ReadAllText(projectFile);
         var match = Regex.Match(content, versionRegex);
         if (match.Success)
@@ -39,11 +52,9 @@ using var writer = new StreamWriter(filePath);
 
 foreach (var (version, projects) in versionProjects)
 {
-    Console.WriteLine($"{version}");
     writer.WriteLine($"{version}");
     foreach (var project in projects)
     {
-        Console.WriteLine($"\t{project}");
         writer.WriteLine($"\t{project}");
     }
 }
